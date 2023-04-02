@@ -12,6 +12,8 @@ import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+
 @RequiredArgsConstructor
 @Service
 public class PaymentServiceImpl implements PaymentService{
@@ -27,6 +29,7 @@ public class PaymentServiceImpl implements PaymentService{
         return paymentRepository.save(payment);
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> preAuth(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
@@ -34,11 +37,12 @@ public class PaymentServiceImpl implements PaymentService{
         //TODO: throw custom error state machine not found
         if (sm == null) return null;
 
-        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTHORIZE);
+        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTH_APPROVED);
 
-        return null;
+        return sm;
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> authorizePayment(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
@@ -47,9 +51,10 @@ public class PaymentServiceImpl implements PaymentService{
 
         sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED);
 
-        return null;
+        return sm;
     }
 
+    @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> declineAuth(Long paymentId) {
         StateMachine<PaymentState, PaymentEvent> sm = build(paymentId);
@@ -58,7 +63,7 @@ public class PaymentServiceImpl implements PaymentService{
 
         sendEvent(paymentId, sm, PaymentEvent.AUTH_DECLINED);
 
-        return null;
+        return sm;
     }
 
     private void sendEvent(Long paymentId, StateMachine<PaymentState, PaymentEvent> sm, PaymentEvent event) {
@@ -78,6 +83,7 @@ public class PaymentServiceImpl implements PaymentService{
 
         StateMachine<PaymentState, PaymentEvent> sm = stateMachineFactory.getStateMachine(Long.toString(payment.getId()));
 
+        System.out.println("Resetting state machine");
         sm.stop();
 
         // reset state to the state set in DB
@@ -90,6 +96,7 @@ public class PaymentServiceImpl implements PaymentService{
                 });
 
         sm.start();
+        System.out.println("Resetted state machine");
 
         return sm;
     }
