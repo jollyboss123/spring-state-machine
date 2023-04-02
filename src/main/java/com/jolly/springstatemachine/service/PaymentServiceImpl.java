@@ -49,11 +49,14 @@ public class PaymentServiceImpl implements PaymentService{
 
         if (sm == null) return null;
 
-        sendEvent(paymentId, sm, PaymentEvent.AUTH_APPROVED);
+        sendEvent(paymentId, sm, PaymentEvent.AUTHORIZE);
 
         return sm;
     }
 
+    // don't have to decline since we have already handled error and decline
+    // in [StateMachineConfig] through actions
+    @Deprecated
     @Transactional
     @Override
     public StateMachine<PaymentState, PaymentEvent> declineAuth(Long paymentId) {

@@ -5,6 +5,7 @@ import com.jolly.springstatemachine.domain.PaymentEvent;
 import com.jolly.springstatemachine.domain.PaymentState;
 import com.jolly.springstatemachine.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,5 +49,20 @@ class PaymentServiceImplTest {
         List<PaymentState> preAuthStates = Arrays.asList(PaymentState.PRE_AUTH, PaymentState.PRE_AUTH_ERROR);
 
         assertTrue(preAuthStates.contains(sm.getState().getId()));
+    }
+
+    @RepeatedTest(10)
+    void auth() {
+        Payment savedPayment = paymentService.newPayment(payment);
+
+        StateMachine<PaymentState, PaymentEvent> sm = paymentService.preAuth(savedPayment.getId());
+
+        if (sm.getState().getId() == PaymentState.PRE_AUTH) {
+            StateMachine<PaymentState, PaymentEvent> authSM = paymentService.authorizePayment(savedPayment.getId());
+
+            List<PaymentState> authStates = Arrays.asList(PaymentState.AUTH, PaymentState.AUTH_ERROR);
+
+            assertTrue(authStates.contains(authSM.getState().getId()));
+        }
     }
 }
