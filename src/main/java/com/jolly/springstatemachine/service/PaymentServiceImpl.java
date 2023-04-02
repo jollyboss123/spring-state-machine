@@ -37,7 +37,7 @@ public class PaymentServiceImpl implements PaymentService{
         //TODO: throw custom error state machine not found
         if (sm == null) return null;
 
-        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTH_APPROVED);
+        sendEvent(paymentId, sm, PaymentEvent.PRE_AUTHORIZE);
 
         return sm;
     }
